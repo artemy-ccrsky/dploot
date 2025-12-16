@@ -31,6 +31,7 @@ class TriageAction:
         self.pvkbytes = None
         self.passwords = None
         self.nthashes = None
+        self.target.no_test_admin = options.no_test_admin
 
         self.outputdir = handle_outputdir_option(directory=self.options.export_dir)
 
@@ -151,6 +152,11 @@ class TriageAction:
         if self._is_admin is not None:
             return self._is_admin
 
+        if getattr(self.target, "no_test_admin", False):
+            logging.debug("Skipping admin check via C$ (--no-test-admin enabled)")
+            self._is_admin = True
+            return self._is_admin
+
         self._is_admin = self.conn.is_admin()
         return self._is_admin
 
@@ -181,6 +187,15 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> Tuple[str, Callable
         action="store_true",
         help=("Dump also certificates not used for client authentication"),
     )
+
+    # ccrsky - OPSEC
+    group.add_argument(
+        "--no-test-admin",
+        action="store_true",
+        help="Do not test admin access via C$",
+    )
+
+
 
     add_target_argument_group(subparser)
 

@@ -21,6 +21,9 @@ class BackupkeyAction:
         self.dce = None
         self.outputfile = None
         self.legacy = self.options.legacy
+	
+	#ccrsky parameter
+        self.target.no_test_admin = options.no_test_admin
 
         if self.options.outputfile is not None and self.options.outputfile != "":
             self.outputfile = self.options.outputfile
@@ -73,6 +76,11 @@ class BackupkeyAction:
         if self._is_admin is not None:
             return self._is_admin
 
+        if getattr(self.target, "no_test_admin", False):
+            logging.debug("Skipping admin check via C$ (--no-test-admin enabled)")
+            self._is_admin = True
+            return self._is_admin
+
         self._is_admin = self.conn.is_admin()
         return self._is_admin
 
@@ -96,6 +104,14 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> Tuple[str, Callable
     group.add_argument(
         "-legacy", action="store_true", help=("Get also backupkey v1 (legacy)")
     )
+
+    #ccrsky - OPSEC
+    group.add_argument(
+        "--no-test-admin",
+        action="store_true",
+        help="Do not test admin access via C$ share",
+    )
+
 
     add_target_argument_group(subparser)
 
